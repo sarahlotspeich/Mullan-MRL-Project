@@ -9,15 +9,15 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(survival)
+library(survival) #datasets and functions
 library(dplyr)
 library(ggplot2)
 library(tableone)
+library(magrittr)
 ```
 
-### Preamble 
+### Preamble: To Pipe or Not to Pipe
 
-Just a note or two about the way that I code - I'm a big fan of the "pipe" operator to keep my code easy to read. Recently, the `|>` pipe became available in "base R" (i.e., it does not require additional installation). I will use this throughout, and if you're new to pipes here is a toy example to demonstrate how they are used: 
 ```{r}
 # Take the square root of the sequence 1-10 and then log transform
 
@@ -25,63 +25,11 @@ Just a note or two about the way that I code - I'm a big fan of the "pipe" opera
 log(sqrt(1:10))
 
 ## With pipes
-1:10 |> 
-  sqrt() |> 
+1:10 %>%
+  sqrt() %>%
   log()
 ```
 
-Mostly I like that the pipes allow me to code in more of a "flow" and to avoid nesting parentheses. I won't include a Syntax section on future labs; usually, we will start with Installations (if any) and the lab Objectives. 
-
-### Installations
-
-To start, we will install the [`survival` package](https://cran.r-project.org/web/packages/survival/index.html), which contains many datasets for us to explore and functions for us to use.  
-
-```{r, eval = F}
-# Install package
-install.packages("survival")
-
-# Load package
-library(survival)
-```
-
-For some data cleaning, we will use the `dplyr` tools. 
-
-```{r, eval = F}
-# Install package
-install.packages("dplyr")
-
-# Load package
-library(dplyr)
-```
-
-For data visualization, we will use the holygrail: `ggplot2`. 
-
-```{r, eval = F}
-# Install package
-install.packages("ggplot2")
-
-# Load package
-library(ggplot)
-```
-
-To summarize patient demographics with ease, we will use `tableone`. 
-
-```{r, eval = F}
-# Install package
-install.packages("tableone")
-
-# Load package
-library(tableone)
-```
-
-We will introduce and install other packages later in the course, as they become relevant to our learning objectives. But for now, `survival` will be all we really need. 
-
-### Objectives
-
-For Lab 1, our objectives are the following: 
-
-  1.    Learn how to organize and format survival data in `R`
-  2.    Refresh on built-in functions for common distributions. 
 
 ### Introduction to the `veteran` data
 
@@ -105,32 +53,29 @@ Recall that in survival analysis, our data need to have three characteristics:
   
 #### *Your turn:* Identify these characteristics in the `veteran` data. 
 
-  1.    Time origin:
-  2.    Time scale:
-  3.    Event of interest: 
+  1.    Time origin: treatment
+  2.    Time scale: days
+  3.    Event of interest: death or end of study
 
 #### Import the data
 
 Once you've loaded the `survival` package, you already have the `veteran` data! Don't believe me? Try to use it. 
 
 ```{r}
-
+head(veteran)
 ```
 
 #### Add labels for `trt` and `prior`
 
-We have two categorical variables, `trt`, `prior`, and `celltype`. The first two, `trt` and `prior`,  are currently coded as integers but would be more interpretable as factors. The third is already a factor. The `mutate()` function adds new columns or replaces existing columns. Let's use it to reformat `trt` and `prior`. 
-
 ```{r label}
 # Turn trt and prior into labeled factor variables
-
+veteran <- veteran %>% mutate(trt = as.factor(trt), prior = as.factor(prior))
+glimpse(veteran)
 ```
 
 Note: `status` is also categorical, but we want to leave it as an integer for some survival-specific functions to come. 
 
 ### Exploratory data analysis
-
-As with any new dataset, we're curious! Let's do some "digging" to get a better idea of who and what are in the `veteran` data. 
 
 #### Staggered entry
 
@@ -140,6 +85,16 @@ Create either a graphical or numerical summary of how many patients entered the 
 
 ```{r}
 # Summarize who entered the study when 
+when <- mean(veteran$diagtime)
+veteran %>% ggplot(aes(x = diagtime)) + 
+  geom_histogram(fill = "blue", bins = 30) +
+  geom_vline(xintercept = when, color = "red") +
+  theme_bw() +
+  labs(title = "Distribution of Entry Times",
+       subtitle = "Mean = 8.77 months",
+       x = "Time from Diagnosis to Treatment",
+       y = "Count")
+
 ```
 
 #### Patient demographics 
@@ -150,35 +105,39 @@ You can create an overall summary of all patients,
 
 ```{r}
 # Create table summarizing patients (overall)
-
+tableOne <- CreateTableOne(data = veteran)
+tableOne
 ```
 
 or broken down (i.e., stratified) on something like treatment group
 
 ```{r}
 # Create table summarizing patients (stratified by trt)
-
+tableOneStrat <- CreateTableOne(data = veteran, strata = c("trt"))
+tableOneStrat
 ```
 
 #### Event frequency 
 
 ```{r}
 # Tabulate event frequency
-
+veteran$stat[which(veteran$status == "0")] <- "Censored"
+veteran$stat[which(veteran$status == "1")] <- "Dead"
+veteran %>% mutate(stat = as.factor(stat)) %>% select(stat) %>% table()
 ```
 
 Of `r nrow(veteran)` patients in the trial, `r sum(veteran$status)` (`r round(mean(veteran$status) * 100)`%) died before the study ended, leaving just `r nrow(veteran) - sum(veteran$status)` (`r round(mean(veteran$status == 0) * 100)`%) censored. We can look at the event frequency further broken down by other risk factors, like... 
 
 ```{r}
-# Tabulate vent frequency by treatment group
-
+# Tabulate event frequency by treatment group
+veteran %>% select(stat, trt) %>% table()
 ```
 
   -   **By treatment group:** There were `r with(veteran, table(status, trt))[2, 1]` deaths among the standard treatment group (`r with(veteran, table(status, trt))[2, 1]/sum(with(veteran, table(status, trt))[, 1])`) and `r with(veteran, table(status, trt))[2, 2]/sum(with(veteran, table(status, trt))[, 2])` among the test treatment group.
 
 ```{r}
 # Tabulate event frequency by prior therapy status
-
+veteran %>% select(stat, prior) %>% table()
 ```
 
   -   **By prior therapy status:** There were `r with(veteran, table(status, prior))[2, 1]` deaths among people without prior therapy (`r with(veteran, table(status, prior))[2, 1]/sum(with(veteran, table(status, prior))[, 1])`) and `r with(veteran, table(status, prior))[2, 2]/sum(with(veteran, table(status, prior))[, 2])` among people with prior therapy.
@@ -196,21 +155,25 @@ Finally we create a special type of R object called a `Surv`, which contains the
 
 ```{r surv_obj}
 # Create Surv object for the veteran data
-S = 
-  
+# Create Surv object for the veteran data
+S = Surv(time = veteran$time, 
+          event = veteran$status)
 S
 ```
+
 
 The `Surv` object is a key input to many of the `survival` package functions for estimation and modeling. For example, we could feed `S` into the `survfit()` function to obtain a ``nonparametric'' (i.e., data-driven, distribution-free) estimate of the survival function. 
 
 ```{r}
 # Example: Fit a nonparametric survival curve for the veteran data
 ## You can feed S in from above, in which case you don't need to specify the "data" argument
-KM = 
+KM <- survfit(formula = S ~ 1)
 KM 
 
 ## Or you can define the Surv object inside of the survfit() call
-KM = 
+KM <- survfit(formula = Surv(time = time, event = status) ~ 1, 
+             data = veteran)
+
 
 # Examine estimated survival with plot 
 plot(KM) 
@@ -226,6 +189,7 @@ The PDF $f(x)$ is already implemented as the `dlnorm()` function, where the argu
 
 ```{r}
 # Compute the PDF of time at 14 days
+dlnorm(x = 14, meanlog = 4.2, sdlog = 1.4)
 
 ```
 
@@ -238,18 +202,23 @@ And `plnorm()` is the CDF $F(x)$. Use it to write your own function for $S(x)$ b
 ```{r}
 # Define a function for the survival 
 Sx = function(x) {
-  
+  1 - plnorm(q = x, meanlog = 4.2, sdlog = 1.4)
 }
 
 # Compute survival one year post-treatment
-
+Sx(365)
 ```
 
 Now, plot the survival function for `time` for 2 years post-treatment. (Hint: You might want to save this plot because we're going to add layers to it.)
 
 ```{r}
 # Plot the survival function for t = 0 to 2 * 365
-plot_Sx = 
+plot_Sx <- veteran %>% ggplot(aes(x = time, y = Sx(time))) + 
+  geom_line() +
+  labs(title = "Survival Past Treatment",
+       x = "Time Past Treatment",
+       y = "Probability of Survival Past That Time") +
+  theme_bw()
 
 plot_Sx
 ```
@@ -257,7 +226,7 @@ plot_Sx
 How long post-treatment is the survival probability 50\%? We can find the exact value using the quantile function `qlnorm()`: 
 
 ```{r}
-Sx50 = 
+Sx50 <- qlnorm(0.5, meanlog = 4.2, sdlog = 1.4)
   
 Sx50
 ```
@@ -265,7 +234,7 @@ Sx50
 Annotate this time point on your plot of the survival curve (maybe using dashed lines, shading, etc).
 
 ```{r}
-
+plot_Sx + geom_vline(xintercept = 66.68633, color = "magenta")
 ```
 
 #### Quantity 3: Hazard function 
@@ -275,7 +244,7 @@ By definition, we have that for continuous `time` the hazard function is $h(x) =
 ```{r}
 # Define a function for the hazard 
 hx = function(x) {
-  
+  dlnorm(x = x, meanlog = 4.2, sdlog = 1.4) / Sx(x)
 }
 ```
 
@@ -283,7 +252,12 @@ What is the shape of the hazard function for death in the `veteran` data? You ca
 
 ```{r}
 # Plot the hazard function for t = 0 to 2 * 365
-plot_hx = 
+plot_hx <- veteran %>% ggplot(aes(x = time, y = hx(time))) + 
+  geom_line() +
+  labs(title = "Risk Past Treatment",
+       x = "Time Past Treatment",
+       y = "Probability of Dying In The Next Instant If You Survived This Far") +
+  theme_bw()
 
 plot_hx
 ```
@@ -293,7 +267,10 @@ Are there any changepoints in the hazard? Find the times associated with them us
 ```{r}
 # Use nlm() to find x to maximize ht
 ## (i.e., to minimize -ht)
-
+neghx <- function(x) {
+  -1 * dlnorm(x = x, meanlog = 4.2, sdlog = 1.4) / Sx(x)
+}
+nlm(f = neghx, p = 1)$estimate
 ```
 
 #### Quantity 4: Cumulative hazard function
@@ -303,7 +280,7 @@ Now that we have a nice function for the hazard, we just need to integrate under
 ```{r}
 # Define a function for the cumulative hazard 
 Hx = function(x) {
-  
+  integrate(f = hx, lower = 0, upper = x)
 }
 ```
 
@@ -311,13 +288,22 @@ Use your function to calculate the cumulative hazard of death 100 days post-trea
 
 ```{r}
 # Calculate cumulative hazard at x = 30
-
+Hx(30)
 ```
 
 and use shading to illustrate your plot of the hazard function to show where this comes from. 
 
 ```{r}
 
+shadeH <-subset(veteran, time < 30)
+
+plot_hx +
+    stat_function(geom = "area", 
+                fun = hx, 
+                xlim = c(0, 30), 
+                fill = "magenta", 
+                alpha = 0.7
+                )
 ```
 
 #### Quantity 5: Mean residual life 
@@ -327,7 +313,7 @@ We now have all of the pieces necessary to define a function for the mean residu
 ```{r}
 # Define function for mean residual life 
 mrl = function(x) {
-  
+  integrate(f = Sx, lower = x, upper = Inf)$value / Sx(x)
 }
 ```
 
@@ -335,7 +321,10 @@ Calculate the mean residual life after already surviving 10, 50, 100, and 500 da
 
 ```{r}
 # Calculate mean residual life at x = 50
-
+times <- c(10,50,100,500)
+for(i in times) {
+  print(mrl(i))
+}
 ```
 
 #### Quantity 6: Mean life 
@@ -372,18 +361,18 @@ We have two ways to find the $(100)p$th percentile of a time-to-event variable: 
 
 ```{r}
 # Find median life using qlnorm()
-
+qlnorm(p = 0.25, meanlog = 4.2, sdlog = 1.4)
 ```
 
 **Approach 2: Inverting the survival.** We can treat the constraint that $S(\phi_{p}) = 1 - p$ as an objective function and use a solver like `uniroot()` to find the value of $\phi_{p}$ to make it true. 
 
 ```{r}
 # Define the constraint that survival at \phi = 1 - p
-constr = function() {
-  
+constr = function(phi, p) {
+  Sx(phi) - (1 - p)
 }
 
 
 # Use uniroot() to find phi to satisfy it
-
+uniroot(f = constr, interval = c(0,1000), p = 0.25)$root
 ```
