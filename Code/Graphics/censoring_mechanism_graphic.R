@@ -104,7 +104,7 @@ plot1 <- grid_toy %>% ggplot() +
   geom_point(aes(x = x, y = c1, col = d1)) + 
   geom_abline(slope = 1, linetype = 2) +
   theme_bw() + ggthemes::scale_colour_colorblind(name = "Status") +
-  labs(x = "X", y = "?", title = "Who's Getting Censored?", subtitle = "Scale = 0.5")
+  labs(x = "X", y = "C", title = "Who's Getting Censored?", subtitle = "Scale = 0.5")
 
 plot2 <- grid_toy %>% ggplot() +
   geom_polygon(data = data.frame(x = c(0, 0, 3.5), y = c(0, 3.5, 3.5)), aes(x = x, y = y), fill = "orange", alpha = 0.3) +
@@ -112,7 +112,7 @@ plot2 <- grid_toy %>% ggplot() +
   geom_point(aes(x = x, y = c2, col = d2)) + 
   geom_abline(slope = 1, linetype = 2) +
   theme_bw() + ggthemes::scale_colour_colorblind(name = "Status") +
-  labs(x = "X", y = "?", title = "Who's Getting Censored?", subtitle = "Scale = 1")
+  labs(x = "X", y = "C", title = "Who's Getting Censored?", subtitle = "Scale = 1")
 
 plot3 <- grid_toy %>% ggplot() +
   geom_polygon(data = data.frame(x = c(0, 0, 3.5), y = c(0, 3.5, 3.5)), aes(x = x, y = y), fill = "orange", alpha = 0.3) +
@@ -120,7 +120,7 @@ plot3 <- grid_toy %>% ggplot() +
   geom_point(aes(x = x, y = c3, col = d3)) + 
   geom_abline(slope = 1, linetype = 2) +
   theme_bw() + ggthemes::scale_colour_colorblind(name = "Status") +
-  labs(x = "X", y = "?", title = "Who's Getting Censored?", subtitle = "Scale = 1.5")
+  labs(x = "X", y = "C", title = "Who's Getting Censored?", subtitle = "Scale = 1.5")
 
 plot4 <- grid_toy %>% ggplot() +
   geom_polygon(data = data.frame(x = c(0, 0, 3.5), y = c(0, 3.5, 3.5)), aes(x = x, y = y), fill = "orange", alpha = 0.3) +
@@ -128,7 +128,7 @@ plot4 <- grid_toy %>% ggplot() +
   geom_point(aes(x = x, y = c4, col = d4)) + 
   geom_abline(slope = 1, linetype = 2) +
   theme_bw() + ggthemes::scale_colour_colorblind(name = "Status") +
-  labs(x = "X", y = "?", title = "Who's Getting Censored?", subtitle = "Scale = 2")
+  labs(x = "X", y = "C", title = "Who's Getting Censored?", subtitle = "Scale = 2")
 
 plot5 <- grid_toy %>% ggplot() +
   geom_polygon(data = data.frame(x = c(0, 0, 3.5), y = c(0, 3.5, 3.5)), aes(x = x, y = y), fill = "orange", alpha = 0.3) +
@@ -136,7 +136,7 @@ plot5 <- grid_toy %>% ggplot() +
   geom_point(aes(x = x, y = c5, col = d5)) + 
   geom_abline(slope = 1, linetype = 2) +
   theme_bw() + ggthemes::scale_colour_colorblind(name = "Status") +
-  labs(x = "X", y = "?", title = "Who's Getting Censored?", subtitle = "Scale = 2.5 (my original)")
+  labs(x = "X", y = "C", title = "Who's Getting Censored?", subtitle = "Scale = 2.5 (my original)")
 
 plot6 <- grid_toy %>% ggplot() +
   geom_polygon(data = data.frame(x = c(0, 0, 3.5), y = c(0, 3.5, 3.5)), aes(x = x, y = y), fill = "orange", alpha = 0.3) +
@@ -144,7 +144,7 @@ plot6 <- grid_toy %>% ggplot() +
   geom_point(aes(x = x, y = c6, col = d6)) + 
   geom_abline(slope = 1, linetype = 2) +
   theme_bw() + ggthemes::scale_colour_colorblind(name = "Status") +
-  labs(x = "X", y = "?", title = "Who's Getting Censored?", subtitle = "Scale = 3")
+  labs(x = "X", y = "C", title = "Who's Getting Censored?", subtitle = "Scale = 3")
 
 grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, nrow = 2) #might want to plot zoom to see it
 #the takeaway: as the scale parameter of the Weibull distribution increases, less data is censored.
