@@ -4,10 +4,11 @@
 set.seed(12623) #day i first wrote the plot
 library(tidyverse)
 
-x <- rweibull(n = 500, shape = 2, scale = 1.2) #to be censored covariate
+n <- 500
+x <- rweibull(n = n, shape = 2, scale = 1.2) #to be censored covariate
 e <- rnorm(n = n, mean = 0, sd = 1) #random error
-y <- 1 + 0.5*x + e #continuous outcome
-c <- rweibull(n = 500, shape = 5, scale = 2)
+y <- 1 + 0.5 * x + e #continuous outcome
+c <- rweibull(n = n, shape = 5, scale = 2)
 d <- as.numeric(x <= c) 
 
 
@@ -40,3 +41,25 @@ toy %>% ggplot() +
        x = "X",
        y = "")
  
+# Sarah's added plot #1 (this one does the fun *pop* art)
+toy %>% 
+  mutate(d = factor(x = d, levels = c(0, 1), 
+                    labels = c("Censored", "Uncensored"))) %>%
+  ggplot(aes(x = x, y = c, col = d)) + 
+  geom_point() + 
+  geom_abline(slope = 1, linetype = 2) +
+  theme_bw() + 
+  scale_color_manual(name = "Status", 
+                     values = c("#006ec9", "yellow")) + 
+  geom_polygon(aes(fill = d))
+
+# Sarah's added plot #2 (this one is boring but more informative)
+toy %>% 
+  mutate(d = factor(x = d, levels = c(0, 1), 
+                    labels = c("Censored", "Uncensored"))) %>%
+  ggplot() + 
+  geom_polygon(data = data.frame(x = c(0, 0, 3.5), y = c(0, 3.5, 3.5)), aes(x = x, y = y), fill = "orange", alpha = 0.3) +
+  geom_polygon(data = data.frame(x = c(0, 3.5, 3.5), y = c(0, 0, 3.5)), aes(x = x, y = y), fill = "black", alpha = 0.3) +
+  geom_point(aes(x = x, y = c, col = d)) + 
+  geom_abline(slope = 1, linetype = 2) +
+  theme_bw() + ggthemes::scale_colour_colorblind(name = "Status") 
