@@ -146,5 +146,8 @@ plot6 <- grid_toy %>% ggplot() +
   theme_bw() + ggthemes::scale_colour_colorblind(name = "Status") +
   labs(x = "X", y = "C", title = "Who's Getting Censored?", subtitle = "Scale = 3")
 
-grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, nrow = 2) #might want to plot zoom to see it
+grid.arrange(plot1, plot2, plot3, plot4, plot5, plot6, 
+             nrow = 2, common.legend = TRUE) #might want to plot zoom to see it
 #the takeaway: as the scale parameter of the Weibull distribution increases, less data is censored.
+
+ggpubr::ggarrange(plotlist = list(plot1, plot2, plot3, plot4, plot5, plot6), common.legend = TRUE)
