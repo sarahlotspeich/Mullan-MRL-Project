@@ -14,6 +14,7 @@ intervals <- c(1,2,3,4,5)
 n <- c(8,5,4,2,1)
 nprime <- c(7,4,3,1,1)
 lambda <- c(2,0,1,0,1)
+dat <- data.frame(n,nprime,lambda)
 
 #initialize estimate vector
 phat <- rep(0, times = 0) 

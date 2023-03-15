@@ -1,0 +1,67 @@
+---
+title: "Ashley Tries Datta"
+output: html_notebook
+---
+
+```{r}
+#The Setup Block
+library(tidyverse)
+set.seed(317) #brought to you live from my St. Patrick's Day adventures!
+censoring <- "light" # censoring rate
+n <- 1000 
+```
+
+```{r}
+#write survival function where q is an instance of X
+trueSURV <- function(q, z) {
+  pweibull(q = q, shape = 0.75, scale = 0.25, lower.tail = FALSE)
+}
+```
+
+```{r}
+#The Data Generation Block
+z <- rbinom(n = n, size = 1, prob = 0.5) # Uncensored covariate
+x <- rweibull(n = n, shape = 0.75, scale = 0.25) # To-be-censored covariate
+q <- ifelse(censoring == "light", 2, 
+           ifelse(censoring == "moderate", 0.35, 0.05)) # Rate parameter for censoring
+c <- rweibull(n = n, shape = 1, scale = q) # Random censoring mechanism
+w <- pmin(x, c) # Observed covariate value
+d <- as.numeric(x <= c) # "Event" indicator
+surv <- trueSURV(x,z)
+```
+
+```{r}
+#similar to my Kaplan Meier Implementation
+#the data
+interval_times <- seq(0,3, by = 0.1) #initialize interval times
+n_vect <- rep(NA, times = 31) #initialize n as defined by Kaplan Meier
+nprime_vect <- rep(NA, times = 31) #initialize n' as defined by Kaplan Meier
+
+for(i in 1:31) { #counts live observations at each interval time
+  n_vect[i] <- length(x[x >= interval_times[i]])
+}
+for(i in 1:31) { #supposed to count live observations right before each interval time
+  nprime_vect[i] <- length(x[x > interval_times[i]])
+}
+
+n_vect - n_prime_vect #sanity check: should not be all zeroes?
+
+
+#THIS DOES NOT WORK YET, REQUIRES A FIX ON NPRIME
+#initialize estimate vector
+phat <- rep(0, times = 0) 
+
+#start product chain
+phat[1] <- nprime[1]/n[1]
+
+#continue product chain
+for(j in 2:length(intervals)) {
+  phat[j] <- phat[j-1]*(nprime[j]/n[j])
+}
+
+#now for Datta's actual approach: integrate under phat
+#slight question: the code above estimates a phat vector. does the integrate function even take a vector to integrate over??
+
+
+```
+
