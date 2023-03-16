@@ -33,35 +33,68 @@ surv <- trueSURV(x,z)
 ```{r}
 #similar to my Kaplan Meier Implementation
 #the data
-interval_times <- seq(0,3, by = 0.1) #initialize interval times
+
+## "from scratch"
+event_times = sort(x = w[d == 1]) ## unique event times (ordered ascendingly)
+deaths_at = sapply(X = event_times, FUN = function(x) sum(event_times == x)) ## count of deaths at each unique event time (same order)
+alive_at = sapply(X = event_times, FUN = function(x) sum(w >= x)) ## count of "at risk" at each unique event time (same order)
+km_df = data.frame(x = event_times, 
+                   dead = deaths_at, 
+                   at_risk = alive_at,
+                   Sx = cumprod(x = (1 - deaths_at / alive_at)))
+
+## function-ize it 
+inside_product = (1 - deaths_at / alive_at)
+smart_girls_km = function(time, inside_product, event_times) {
+  sapply(X = time, 
+         FUN = function(t) prod(x = inside_product[event_times <= t])
+  )
+}
+int_res = integrate(f = smart_girls_km, lower = 0.5, upper = Inf, 
+                    inside_product = inside_product, event_times = event_times)
+
+## using survival package
+library(survival)
+km_fit = survfit(formula = Surv(time = w, event = d) ~ 1)
+
+km_df = data.frame(x = km_fit$time, 
+                   fun_Sx = km_fit$surv) |> 
+  inner_join(y = km_df)
+
+library(ggplot2)
+km_df |> 
+  ggplot(aes(x = x)) + 
+  geom_line(aes(y = Sx), color = "magenta") + 
+  geom_line(aes(y = fun_Sx), color = "purple", linetype = 2) + 
+  theme_minimal()
+
+interval_times <- seq(0, 3, by = 0.1) #initialize interval times
 n_vect <- rep(NA, times = 31) #initialize n as defined by Kaplan Meier
 nprime_vect <- rep(NA, times = 31) #initialize n' as defined by Kaplan Meier
 
 for(i in 1:31) { #counts live observations at each interval time
-  n_vect[i] <- length(x[x >= interval_times[i]])
+  n_vect[i] <- sum(w >= interval_times[i]) #length(x[w >= interval_times[i]])
 }
-for(i in 1:31) { #supposed to count live observations right before each interval time
-  nprime_vect[i] <- length(x[x > interval_times[i]])
+nprime_vect[1] <- n
+for(i in 2:31) { #supposed to count live observations right before each interval time
+  nprime_vect[i] <- n_vect[i-1] #length(x[x > interval_times[i]])
 }
 
-n_vect - n_prime_vect #sanity check: should not be all zeroes?
-
+nprime_vect - n_vect #sanity check: should not be all zeroes?
 
 #THIS DOES NOT WORK YET, REQUIRES A FIX ON NPRIME
 #initialize estimate vector
 phat <- rep(0, times = 0) 
 
 #start product chain
-phat[1] <- nprime[1]/n[1]
+phat[1] <- nprime_vect[1]/n_vect[1]
 
 #continue product chain
-for(j in 2:length(intervals)) {
-  phat[j] <- phat[j-1]*(nprime[j]/n[j])
+for(j in 2:length(interval_times)) {
+  phat[j] <- phat[j-1] * (nprime_vect[j] / n_vect[j])
 }
 
 #now for Datta's actual approach: integrate under phat
 #slight question: the code above estimates a phat vector. does the integrate function even take a vector to integrate over??
-
-
 ```
 

@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r}
 #Packages and Settings
+## Run once: devtools::install_github("sarahlotspeich/imputeCensRd")
 library(imputeCensRd)
 library(tidyverse)
 set.seed(317) #brought to you live from my St. Patrick's Day adventures!
@@ -35,17 +36,15 @@ for(i in 1:n) {
   integral_uses_x[i] <- integrate(trueSURV, lower = x[i], upper = Inf)$value
 }
 
-mrl_uses_x <- integral_uses_x/surv
+mrl_uses_x <- integral_uses_x / surv
 
 integral_uses_w <- rep(NA, times = n)
 for(i in 1:n) {
   integral_uses_w[i] <- integrate(trueSURV, lower = w[i], upper = Inf)$value
 }
-
 mrl_uses_w <- integral_uses_w/surv
 
 dat <- data.frame(x,w,z,d = as.factor(d),mrl_uses_x, mrl_uses_w) # Construct dataset
-
 ```
 
 ```{r}
